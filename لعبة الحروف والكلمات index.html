@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>لعبة الحروف والكلمات العربية</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+      margin: 0;
+      padding: 15px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      color: #1f2937;
+    }
+    .container {
+      max-width: 600px;
+      width: 100%;
+      background: white;
+      border-radius: 20px;
+      padding: 20px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
+    }
+    /* نافذة البدء لفك حظر الصوت في المتصفحات */
+    #startOverlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(255, 255, 255, 0.96);
+      border-radius: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 50;
+      cursor: pointer;
+    }
+    #startOverlay button {
+      background: #22c55e;
+      color: white;
+      font-size: 22px;
+      font-weight: bold;
+      padding: 15px 35px;
+      border: none;
+      border-radius: 30px;
+      box-shadow: 0 6px 16px rgba(34, 197, 94, 0.4);
+      cursor: pointer;
+    }
+    .level-bar {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+      width: 100%;
+    }
+    .level-btn {
+      flex: 1;
+      padding: 10px;
+      border: 2px solid #22c55e;
+      background: #f0fdf4;
+      color: #15803d;
+      font-weight: bold;
+      border-radius: 12px;
+      cursor: pointer;
+      font-size: 15px;
+      transition: all 0.2s;
+    }
+    .level-btn.active {
+      background: #22c55e;
+      color: white;
+    }
+    .display-area {
+      min-height: 120px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 15px;
+      text-align: center;
+    }
+    .target-char {
+      font-size: 64px;
+      font-weight: bold;
+      color: #16a34a;
+    }
+    .target-image {
+      font-size: 65px;
+    }
+    .progress-word {
+      display: flex;
+      gap: 8px;
+      margin-top: 10px;
+      direction: rtl;
+    }
+    .slot {
+      width: 42px;
+      height: 48px;
+      border: 2px dashed #9ca3af;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      font-weight: bold;
+      color: #15803d;
+      background: #f9fafb;
+    }
+    .slot.filled {
+      border-style: solid;
+      border-color: #22c55e;
+      background: #dcfce7;
+    }
+    .sound-btn {
+      background: #3b82f6;
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 50px;
+      height: 50px;
+      font-size: 24px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 15px;
+      box-shadow: 0 4px 6px rgba(59, 130, 246, 0.3);
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      grid-template-rows: repeat(6, 1fr);
+      gap: 8px;
+      width: 100%;
+      max-width: 420px;
+    }
+    .letter-cell {
+      aspect-ratio: 1;
+      background: #f3f4f6;
+      border: 2px solid #e5e7eb;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      font-weight: bold;
+      cursor: pointer;
+      color: #374151;
+      transition: transform 0.1s, background-color 0.2s;
+    }
+    .letter-cell:active {
+      transform: scale(0.93);
+    }
+    .letter-cell.empty {
+      background: #fdfdfd;
+      border: 2px dashed #f3f4f6;
+      cursor: default;
+    }
+    .shake {
+      animation: shake 0.35s ease-in-out;
+      background-color: #fecaca !important;
+      border-color: #ef4444 !important;
+    }
+    .pop {
+      background-color: #bbf7d0 !important;
+      border-color: #22c55e !important;
+      transform: scale(1.08);
+    }
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      20%, 60% { transform: translateX(-6px); }
+      40%, 80% { transform: translateX(6px); }
+    }
+    .feedback {
+      margin-top: 12px;
+      font-size: 16px;
+      font-weight: bold;
+      min-height: 24px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <!-- شاشة التفعيل لفك قيود الصوت في المتصفح -->
+  <div id="startOverlay" onclick="startGameAudio()">
+    <button>اضغط هنا لبدء اللعبة وتشغيل الصوت 🔊</button>
+  </div>
+
+  <div class="level-bar">
+    <button class="level-btn active" onclick="setLevel(1)">المستوى 1 (الحرف)</button>
+    <button class="level-btn" onclick="setLevel(2)">المستوى 2 (الحيوان)</button>
+    <button class="level-btn" onclick="setLevel(3)">المستوى 3 (الكلمة)</button>
+  </div>
+
+  <div class="display-area" id="displayArea"></div>
+
+  <button class="sound-btn" onclick="repeatSound()" title="إعادة نطق الصوت">🔊</button>
+
+  <div class="grid" id="lettersGrid"></div>
+
+  <div class="feedback" id="feedback"></div>
+</div>
+
+<script>
+  const ARABIC_LETTERS = [
+    'أ', 'ب', 'ت', 'ث', 'ج', 'ح', 'خ', 'د', 'ذ', 'ر',
+    'ز', 'س', 'ش', 'ص', 'ض', 'ط', 'ظ', 'ع', 'غ', 'ف',
+    'ق', 'ك', 'ل', 'م', 'ن', 'هـ', 'و', 'ي'
+  ];
+
+  const ANIMALS = [
+    { word: 'أسد', icon: '🦁' },
+    { word: 'أرنب', icon: '🐰' },
+    { word: 'جمل', icon: '🐪' },
+    { word: 'حصان', icon: '🐎' },
+    { word: 'فيل', icon: '🐘' },
+    { word: 'نمر', icon: '🐅' },
+    { word: 'قرد', icon: '🐒' },
+    { word: 'دب', icon: '🐻' },
+    { word: 'بطة', icon: '🦆' },
+    { word: 'صقر', icon: '🦅' }
+  ];
+
+  const OBJECTS = ['كتاب', 'غلاف', 'شنطة', 'قلم', 'علبة', 'مفتاح', 'باب', 'كرسي', 'علم', 'دفتر'];
+
+  let currentLevel = 1;
+  let targetLetter = '';
+  let targetWord = '';
+  let currentWordProgress = [];
+  let spokenText = '';
+  let arabicVoice = null;
+
+  // تجهيز واختيار الصوت العربي من بين الأصوات المتاحة بالجهاز
+  function loadVoices() {
+    if ('speechSynthesis' in window) {
+      const voices = window.speechSynthesis.getVoices();
+      arabicVoice = voices.find(v => v.lang.startsWith('ar')) || null;
+    }
+  }
+
+  if ('speechSynthesis' in window) {
+    loadVoices();
+    window.speechSynthesis.onvoiceschanged = loadVoices;
+  }
+
+  function speak(text) {
+    if (!('speechSynthesis' in window) || !text) return;
+    
+    window.speechSynthesis.cancel(); // إلغاء أي صوت سابق
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'ar-SA';
+    utterance.rate = 0.85;
+
+    if (!arabicVoice) loadVoices();
+    if (arabicVoice) utterance.voice = arabicVoice;
+
+    window.speechSynthesis.speak(utterance);
+  }
+
+  function startGameAudio() {
+    // إخفاء شاشة البدء
+    document.getElementById('startOverlay').style.display = 'none';
+    
+    // تفعيل الصوت بعد تفاعل المستخدم مباشرة
+    loadVoices();
+    nextQuestion();
+  }
+
+  function repeatSound() {
+    speak(spokenText);
+  }
+
+  function createGrid() {
+    const grid = document.getElementById('lettersGrid');
+    grid.innerHTML = '';
+    
+    for (let i = 0; i < 30; i++) {
+      const cell = document.createElement('div');
+      cell.className = 'letter-cell';
+      
+      if (i < ARABIC_LETTERS.length) {
+        const letter = ARABIC_LETTERS[i];
+        cell.innerText = letter;
+        cell.onclick = () => handleLetterClick(letter, cell);
+      } else {
+        cell.classList.add('empty');
+      }
+      grid.appendChild(cell);
+    }
+  }
+
+  function setLevel(lvl) {
+    currentLevel = lvl;
+    document.querySelectorAll('.level-btn').forEach((btn, index) => {
+      btn.classList.toggle('active', index + 1 === lvl);
+    });
+    nextQuestion();
+  }
+
+  function nextQuestion() {
+    document.getElementById('feedback').innerText = '';
+    const displayArea = document.getElementById('displayArea');
+
+    if (currentLevel === 1) {
+      targetLetter = ARABIC_LETTERS[Math.floor(Math.random() * ARABIC_LETTERS.length)];
+      spokenText = targetLetter;
+      displayArea.innerHTML = `<div class="target-char">${targetLetter}</div>`;
+      speak(spokenText);
+    } 
+    else if (currentLevel === 2) {
+      const randomAnimal = ANIMALS[Math.floor(Math.random() * ANIMALS.length)];
+      targetWord = randomAnimal.word;
+      spokenText = targetWord;
+      currentWordProgress = [];
+
+      let slotsHtml = `<div class="target-image">${randomAnimal.icon}</div><div class="progress-word">`;
+      for (let i = 0; i < targetWord.length; i++) {
+        slotsHtml += `<div class="slot" id="slot-${i}"></div>`;
+      }
+      slotsHtml += `</div>`;
+      displayArea.innerHTML = slotsHtml;
+      speak(spokenText);
+    } 
+    else if (currentLevel === 3) {
+      targetWord = OBJECTS[Math.floor(Math.random() * OBJECTS.length)];
+      spokenText = targetWord;
+      currentWordProgress = [];
+
+      let slotsHtml = `<div style="font-size: 20px; color: #4b5563; font-weight: bold;">استمع للكلمة ورتّب حروفها</div><div class="progress-word">`;
+      for (let i = 0; i < targetWord.length; i++) {
+        slotsHtml += `<div class="slot" id="slot-${i}"></div>`;
+      }
+      slotsHtml += `</div>`;
+      displayArea.innerHTML = slotsHtml;
+      speak(spokenText);
+    }
+  }
+
+  function handleLetterClick(letter, cellEl) {
+    const normalize = ch => ch.replace(/[أإآ]/g, 'ا');
+
+    if (currentLevel === 1) {
+      if (letter === targetLetter) {
+        showSuccess(cellEl);
+        setTimeout(nextQuestion, 1000);
+      } else {
+        showError(cellEl);
+        speak(spokenText);
+      }
+    } else {
+      const expectedChar = targetWord[currentWordProgress.length];
+      if (letter === expectedChar || normalize(letter) === normalize(expectedChar)) {
+        cellEl.classList.add('pop');
+        setTimeout(() => cellEl.classList.remove('pop'), 200);
+
+        const slot = document.getElementById(`slot-${currentWordProgress.length}`);
+        slot.innerText = letter;
+        slot.classList.add('filled');
+        currentWordProgress.push(letter);
+
+        if (currentWordProgress.length === targetWord.length) {
+          document.getElementById('feedback').innerText = 'ممتاز! إجابة صحيحة 🎉';
+          document.getElementById('feedback').style.color = '#16a34a';
+          setTimeout(nextQuestion, 1400);
+        }
+      } else {
+        showError(cellEl);
+        speak(spokenText);
+      }
+    }
+  }
+
+  function showError(cellEl) {
+    cellEl.classList.add('shake');
+    document.getElementById('feedback').innerText = 'حاول مرة أخرى!';
+    document.getElementById('feedback').style.color = '#dc2626';
+    setTimeout(() => cellEl.classList.remove('shake'), 400);
+  }
+
+  function showSuccess(cellEl) {
+    cellEl.classList.add('pop');
+    document.getElementById('feedback').innerText = 'أحسنت! إجابة صحيحة 🎉';
+    document.getElementById('feedback').style.color = '#16a34a';
+    setTimeout(() => cellEl.classList.remove('pop'), 400);
+  }
+
+  createGrid();
+</script>
+
+</body>
+</html>
