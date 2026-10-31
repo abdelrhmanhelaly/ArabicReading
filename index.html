@@ -33,7 +33,6 @@
       align-items: center;
       position: relative;
     }
-    /* نافذة البدء لفك حظر الصوت في المتصفحات */
     #startOverlay {
       position: absolute;
       top: 0;
@@ -47,14 +46,13 @@
       align-items: center;
       justify-content: center;
       z-index: 50;
-      cursor: pointer;
     }
     #startOverlay button {
       background: #22c55e;
       color: white;
       font-size: 22px;
       font-weight: bold;
-      padding: 15px 35px;
+      padding: 16px 36px;
       border: none;
       border-radius: 30px;
       box-shadow: 0 6px 16px rgba(34, 197, 94, 0.4);
@@ -75,7 +73,7 @@
       font-weight: bold;
       border-radius: 12px;
       cursor: pointer;
-      font-size: 15px;
+      font-size: 14px;
       transition: all 0.2s;
     }
     .level-btn.active {
@@ -194,9 +192,9 @@
 <body>
 
 <div class="container">
-  <!-- شاشة التفعيل لفك قيود الصوت في المتصفح -->
-  <div id="startOverlay" onclick="startGameAudio()">
-    <button>اضغط هنا لبدء اللعبة وتشغيل الصوت 🔊</button>
+  <!-- شاشة للضغط حتى يسمح المتصفح بإخراج الصوت -->
+  <div id="startOverlay">
+    <button onclick="startGame()">اضغط هنا لبدء اللعبة 🔊</button>
   </div>
 
   <div class="level-bar">
@@ -207,7 +205,7 @@
 
   <div class="display-area" id="displayArea"></div>
 
-  <button class="sound-btn" onclick="repeatSound()" title="إعادة نطق الصوت">🔊</button>
+  <button class="sound-btn" onclick="repeatSound()" title="إعادة تشغيل الصوت">🔊</button>
 
   <div class="grid" id="lettersGrid"></div>
 
@@ -215,10 +213,36 @@
 </div>
 
 <script>
+  // جدول الحروف وأسماء نطقها لكي ينطق "ألف، باء، تاء..." بدلاً من صوت الحرف المجرد
   const ARABIC_LETTERS = [
-    'أ', 'ب', 'ت', 'ث', 'ج', 'ح', 'خ', 'د', 'ذ', 'ر',
-    'ز', 'س', 'ش', 'ص', 'ض', 'ط', 'ظ', 'ع', 'غ', 'ف',
-    'ق', 'ك', 'ل', 'م', 'ن', 'هـ', 'و', 'ي'
+    { char: 'أ', name: 'ألف' },
+    { char: 'ب', name: 'باء' },
+    { char: 'ت', name: 'تاء' },
+    { char: 'ث', name: 'ثاء' },
+    { char: 'ج', name: 'جيم' },
+    { char: 'ح', name: 'حاء' },
+    { char: 'خ', name: 'خاء' },
+    { char: 'د', name: 'دال' },
+    { char: 'ذ', name: 'ذال' },
+    { char: 'ر', name: 'راء' },
+    { char: 'ز', name: 'زاي' },
+    { char: 'س', name: 'سين' },
+    { char: 'ش', name: 'شين' },
+    { char: 'ص', name: 'صاد' },
+    { char: 'ض', name: 'ضاد' },
+    { char: 'ط', name: 'طاء' },
+    { char: 'ظ', name: 'ظاء' },
+    { char: 'ع', name: 'عين' },
+    { char: 'غ', name: 'غين' },
+    { char: 'ف', name: 'فاء' },
+    { char: 'ق', name: 'قاف' },
+    { char: 'ك', name: 'كاف' },
+    { char: 'ل', name: 'لام' },
+    { char: 'م', name: 'ميم' },
+    { char: 'ن', name: 'نون' },
+    { char: 'هـ', name: 'هاء' },
+    { char: 'و', name: 'واو' },
+    { char: 'ي', name: 'ياء' }
   ];
 
   const ANIMALS = [
@@ -240,47 +264,43 @@
   let targetLetter = '';
   let targetWord = '';
   let currentWordProgress = [];
-  let spokenText = '';
-  let arabicVoice = null;
+  let currentVoiceText = '';
 
-  // تجهيز واختيار الصوت العربي من بين الأصوات المتاحة بالجهاز
-  function loadVoices() {
-    if ('speechSynthesis' in window) {
-      const voices = window.speechSynthesis.getVoices();
-      arabicVoice = voices.find(v => v.lang.startsWith('ar')) || null;
-    }
-  }
+  // مشغل صوت Audio حقيقي ومباشر
+  const audioPlayer = new Audio();
 
-  if ('speechSynthesis' in window) {
-    loadVoices();
-    window.speechSynthesis.onvoiceschanged = loadVoices;
-  }
+  function playArabicSpeech(text) {
+    if (!text) return;
+    currentVoiceText = text;
 
-  function speak(text) {
-    if (!('speechSynthesis' in window) || !text) return;
-    
-    window.speechSynthesis.cancel(); // إلغاء أي صوت سابق
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = 'ar-SA';
-    utterance.rate = 0.85;
+    // استخدام خدمة نطق صوتية مباشرة (تدعم اللغة العربية دائماً بدون الاعتماد على نظام الجهاز)
+    const audioUrl = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(text)}&tl=ar&client=tw-ob`;
 
-    if (!arabicVoice) loadVoices();
-    if (arabicVoice) utterance.voice = arabicVoice;
-
-    window.speechSynthesis.speak(utterance);
-  }
-
-  function startGameAudio() {
-    // إخفاء شاشة البدء
-    document.getElementById('startOverlay').style.display = 'none';
-    
-    // تفعيل الصوت بعد تفاعل المستخدم مباشرة
-    loadVoices();
-    nextQuestion();
+    audioPlayer.src = audioUrl;
+    audioPlayer.play().catch(e => {
+      // بديل إضافي في حال منع المتصفح رابط المصدر
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+        const u = new SpeechSynthesisUtterance(text);
+        u.lang = 'ar-SA';
+        window.speechSynthesis.speak(u);
+      }
+    });
   }
 
   function repeatSound() {
-    speak(spokenText);
+    playArabicSpeech(currentVoiceText);
+  }
+
+  function startGame() {
+    document.getElementById('startOverlay').style.display = 'none';
+    // تشغيل ملف صامت لحظياً لكسر قيود المتصفح
+    audioPlayer.play().then(() => {
+      audioPlayer.pause();
+      nextQuestion();
+    }).catch(() => {
+      nextQuestion();
+    });
   }
 
   function createGrid() {
@@ -292,9 +312,9 @@
       cell.className = 'letter-cell';
       
       if (i < ARABIC_LETTERS.length) {
-        const letter = ARABIC_LETTERS[i];
-        cell.innerText = letter;
-        cell.onclick = () => handleLetterClick(letter, cell);
+        const item = ARABIC_LETTERS[i];
+        cell.innerText = item.char;
+        cell.onclick = () => handleLetterClick(item.char, cell);
       } else {
         cell.classList.add('empty');
       }
@@ -315,15 +335,15 @@
     const displayArea = document.getElementById('displayArea');
 
     if (currentLevel === 1) {
-      targetLetter = ARABIC_LETTERS[Math.floor(Math.random() * ARABIC_LETTERS.length)];
-      spokenText = targetLetter;
+      const randomItem = ARABIC_LETTERS[Math.floor(Math.random() * ARABIC_LETTERS.length)];
+      targetLetter = randomItem.char;
       displayArea.innerHTML = `<div class="target-char">${targetLetter}</div>`;
-      speak(spokenText);
+      // نطق اسم الحرف بصوت واضح (مثلاً: "حرف الجيم" أو "جيم")
+      playArabicSpeech(randomItem.name);
     } 
     else if (currentLevel === 2) {
       const randomAnimal = ANIMALS[Math.floor(Math.random() * ANIMALS.length)];
       targetWord = randomAnimal.word;
-      spokenText = targetWord;
       currentWordProgress = [];
 
       let slotsHtml = `<div class="target-image">${randomAnimal.icon}</div><div class="progress-word">`;
@@ -332,11 +352,10 @@
       }
       slotsHtml += `</div>`;
       displayArea.innerHTML = slotsHtml;
-      speak(spokenText);
+      playArabicSpeech(targetWord);
     } 
     else if (currentLevel === 3) {
       targetWord = OBJECTS[Math.floor(Math.random() * OBJECTS.length)];
-      spokenText = targetWord;
       currentWordProgress = [];
 
       let slotsHtml = `<div style="font-size: 20px; color: #4b5563; font-weight: bold;">استمع للكلمة ورتّب حروفها</div><div class="progress-word">`;
@@ -345,20 +364,20 @@
       }
       slotsHtml += `</div>`;
       displayArea.innerHTML = slotsHtml;
-      speak(spokenText);
+      playArabicSpeech(targetWord);
     }
   }
 
   function handleLetterClick(letter, cellEl) {
-    const normalize = ch => ch.replace(/[أإآ]/g, 'ا');
+    const normalize = ch => ch.replace(/[أإآ]/g, 'ا').replace(/هـ/g, 'ه');
 
     if (currentLevel === 1) {
       if (letter === targetLetter) {
         showSuccess(cellEl);
-        setTimeout(nextQuestion, 1000);
+        setTimeout(nextQuestion, 1100);
       } else {
         showError(cellEl);
-        speak(spokenText);
+        playArabicSpeech(currentVoiceText);
       }
     } else {
       const expectedChar = targetWord[currentWordProgress.length];
@@ -378,7 +397,7 @@
         }
       } else {
         showError(cellEl);
-        speak(spokenText);
+        playArabicSpeech(currentVoiceText);
       }
     }
   }
