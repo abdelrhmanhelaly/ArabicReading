@@ -4,8 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>لعبة الحروف والكلمات العربية</title>
-  <!-- مكتبة صوتية متوافقة مع متصفحات الموبايل والكمبيوتر مجاناً -->
-  <script src="https://code.responsivevoice.org/responsivevoice.js?key=FREE_KEY"></script>
   <style>
     * {
       box-sizing: border-box;
@@ -16,7 +14,7 @@
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
       margin: 0;
-      padding: 15px;
+      padding: 12px;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -24,17 +22,18 @@
       color: #1f2937;
     }
     .container {
-      max-width: 600px;
+      max-width: 500px;
       width: 100%;
       background: white;
       border-radius: 20px;
-      padding: 20px;
+      padding: 18px;
       box-shadow: 0 10px 25px rgba(0,0,0,0.08);
       display: flex;
       flex-direction: column;
       align-items: center;
       position: relative;
     }
+    /* نافذة البدء لفك حظر الصوت */
     #startOverlay {
       position: absolute;
       top: 0; left: 0; right: 0; bottom: 0;
@@ -45,36 +44,36 @@
       align-items: center;
       justify-content: center;
       z-index: 50;
-      text-align: center;
       padding: 20px;
+      text-align: center;
     }
     #startOverlay button {
       background: #16a34a;
       color: white;
       font-size: 22px;
       font-weight: bold;
-      padding: 18px 36px;
+      padding: 16px 32px;
       border: none;
-      border-radius: 35px;
-      box-shadow: 0 8px 20px rgba(22, 163, 74, 0.35);
+      border-radius: 30px;
+      box-shadow: 0 8px 18px rgba(22, 163, 74, 0.35);
       cursor: pointer;
     }
     .level-bar {
       display: flex;
-      gap: 10px;
-      margin-bottom: 20px;
+      gap: 8px;
+      margin-bottom: 15px;
       width: 100%;
     }
     .level-btn {
       flex: 1;
-      padding: 10px;
+      padding: 10px 5px;
       border: 2px solid #22c55e;
       background: #f0fdf4;
       color: #15803d;
       font-weight: bold;
       border-radius: 12px;
       cursor: pointer;
-      font-size: 14px;
+      font-size: 13px;
       transition: all 0.2s;
     }
     .level-btn.active {
@@ -82,37 +81,39 @@
       color: white;
     }
     .display-area {
-      min-height: 120px;
+      min-height: 110px;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      margin-bottom: 15px;
+      margin-bottom: 12px;
       text-align: center;
     }
     .target-char {
       font-size: 64px;
       font-weight: bold;
       color: #16a34a;
+      line-height: 1;
     }
     .target-image {
-      font-size: 65px;
+      font-size: 60px;
+      line-height: 1.1;
     }
     .progress-word {
       display: flex;
-      gap: 8px;
+      gap: 6px;
       margin-top: 10px;
       direction: rtl;
     }
     .slot {
-      width: 42px;
-      height: 48px;
+      width: 40px;
+      height: 46px;
       border: 2px dashed #9ca3af;
       border-radius: 8px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 24px;
+      font-size: 22px;
       font-weight: bold;
       color: #15803d;
       background: #f9fafb;
@@ -127,48 +128,44 @@
       color: white;
       border: none;
       border-radius: 50%;
-      width: 55px;
-      height: 55px;
-      font-size: 26px;
+      width: 48px;
+      height: 48px;
+      font-size: 22px;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
       margin-bottom: 15px;
-      box-shadow: 0 4px 10px rgba(37, 99, 235, 0.35);
+      box-shadow: 0 4px 8px rgba(37, 99, 235, 0.3);
     }
     .sound-btn:active {
       transform: scale(0.92);
     }
+    /* شبكة 5 في 6 محكمة */
     .grid {
       display: grid;
       grid-template-columns: repeat(5, 1fr);
       grid-template-rows: repeat(6, 1fr);
-      gap: 8px;
+      gap: 7px;
       width: 100%;
-      max-width: 420px;
+      max-width: 380px;
     }
     .letter-cell {
       aspect-ratio: 1;
       background: #f3f4f6;
       border: 2px solid #e5e7eb;
-      border-radius: 12px;
+      border-radius: 10px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 24px;
+      font-size: 22px;
       font-weight: bold;
       cursor: pointer;
-      color: #374151;
-      transition: transform 0.1s, background-color 0.2s;
+      color: #1f2937;
+      transition: transform 0.1s, background-color 0.15s;
     }
     .letter-cell:active {
-      transform: scale(0.93);
-    }
-    .letter-cell.empty {
-      background: #fdfdfd;
-      border: 2px dashed #f3f4f6;
-      cursor: default;
+      transform: scale(0.92);
     }
     .shake {
       animation: shake 0.35s ease-in-out;
@@ -186,20 +183,20 @@
       40%, 80% { transform: translateX(6px); }
     }
     .feedback {
-      margin-top: 12px;
-      font-size: 16px;
+      margin-top: 10px;
+      font-size: 15px;
       font-weight: bold;
-      min-height: 24px;
+      min-height: 22px;
     }
   </style>
 </head>
 <body>
 
 <div class="container">
-  <!-- شاشة إلزامية لفك قيود المتصفح على الصوت -->
   <div id="startOverlay">
     <h2 style="margin-bottom: 15px; color:#15803d;">مرحباً بك في لعبة الحروف! 🎈</h2>
-    <button onclick="startGame()">اضغط هنا للبدء وسماع الصوت 🔊</button>
+    <p style="color:#6b7280; font-size:14px; margin-bottom:20px;">اضغط على الزر لتفعيل الصوت والبدء</p>
+    <button onclick="startGame()">ابدأ اللعب الآن 🔊</button>
   </div>
 
   <div class="level-bar">
@@ -218,6 +215,7 @@
 </div>
 
 <script>
+  // جدول 30 خانة يحتوي على التاء المربوطة والهمزة وجميع الحروف
   const ARABIC_LETTERS = [
     { char: 'أ', name: 'ألف' },
     { char: 'ب', name: 'باء' },
@@ -246,7 +244,9 @@
     { char: 'ن', name: 'نون' },
     { char: 'هـ', name: 'هاء' },
     { char: 'و', name: 'واو' },
-    { char: 'ي', name: 'ياء' }
+    { char: 'ي', name: 'ياء' },
+    { char: 'ة', name: 'تاء مربوطة' },
+    { char: 'ء', name: 'همزة' }
   ];
 
   const ANIMALS = [
@@ -270,70 +270,105 @@
   let currentWordProgress = [];
   let currentVoiceText = '';
 
-  // دالة نطق موثوقة تعمل عبر تقنيات متعددة
-  function playSpeech(text) {
-    if (!text) return;
-    currentVoiceText = text;
+  // 1. نظام نغمات تفاعلية مدمج يعزف من داخل الهاتف والكمبيوتر بدون أي إنترنت
+  let audioCtx = null;
 
-    // الخيار 1: مكتبة ResponsiveVoice (سيرفر صوتي سحابي موثوق يدعم العربية ولا يُحظر في GitHub)
-    if (window.responsiveVoice && responsiveVoice.voiceSupport()) {
-      responsiveVoice.cancel();
-      responsiveVoice.speak(text, "Arabic Female", { rate: 0.85 });
-      return;
+  function initAudioContext() {
+    if (!audioCtx) {
+      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+      if (AudioContextClass) {
+        audioCtx = new AudioContextClass();
+      }
     }
+    if (audioCtx && audioCtx.state === 'suspended') {
+      audioCtx.resume();
+    }
+  }
 
-    // الخيار 2: Web Speech API كبديل فوري في المتصفح
-    if ('speechSynthesis' in window) {
+  function playTone(type) {
+    if (!audioCtx) return;
+    try {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+
+      const now = audioCtx.currentTime;
+      if (type === 'success') {
+        // نغمة نجاح ثلاثية مبهجة
+        osc.frequency.setValueAtTime(523.25, now); // C5
+        osc.frequency.setValueAtTime(659.25, now + 0.1); // E5
+        osc.frequency.setValueAtTime(783.99, now + 0.2); // G5
+        gain.gain.setValueAtTime(0.2, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
+        osc.start(now);
+        osc.stop(now + 0.35);
+      } else if (type === 'error') {
+        // نغمة خطأ منخفضة وواضحة
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(180, now);
+        osc.frequency.setValueAtTime(130, now + 0.1);
+        gain.gain.setValueAtTime(0.25, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
+        osc.start(now);
+        osc.stop(now + 0.25);
+      }
+    } catch(e) {}
+  }
+
+  // 2. نظام نطق الكلمات والحروف المباشر
+  function speakVoice(text) {
+    if (!('speechSynthesis' in window) || !text) return;
+    try {
       window.speechSynthesis.cancel();
       const u = new SpeechSynthesisUtterance(text);
       u.lang = 'ar-SA';
       u.rate = 0.85;
 
+      // محاولة اختيار أفضل صوت عربي متاح
       const voices = window.speechSynthesis.getVoices();
-      const arVoice = voices.find(v => v.lang && v.lang.startsWith('ar'));
+      const arVoice = voices.find(v => v.lang && (v.lang.startsWith('ar') || v.lang.includes('ar')));
       if (arVoice) u.voice = arVoice;
 
       window.speechSynthesis.speak(u);
-    }
+    } catch(e) {}
+  }
+
+  function playSoundAndVoice(text, soundType) {
+    currentVoiceText = text;
+    if (soundType) playTone(soundType);
+    speakVoice(text);
   }
 
   function repeatSound() {
-    playSpeech(currentVoiceText);
+    playSoundAndVoice(currentVoiceText);
   }
 
   function startGame() {
-    // إخفاء الواجهة
+    initAudioContext();
     document.getElementById('startOverlay').style.display = 'none';
 
-    // فك حظر الصوت في المتصفح (Audio Context Unlock)
-    if (window.responsiveVoice) {
-      responsiveVoice.speak("أهلاً بك", "Arabic Female", { volume: 0 });
-    }
+    // تنشيط محرك الصوت بكلمة افتتاحية
     if ('speechSynthesis' in window) {
+      window.speechSynthesis.getVoices();
       const dummy = new SpeechSynthesisUtterance('');
       window.speechSynthesis.speak(dummy);
     }
-
-    setTimeout(nextQuestion, 200);
+    nextQuestion();
   }
 
+  // رسم جدول الـ 30 خانة (5 أعمدة في 6 صفوف)
   function createGrid() {
     const grid = document.getElementById('lettersGrid');
     grid.innerHTML = '';
     
-    for (let i = 0; i < 30; i++) {
+    ARABIC_LETTERS.forEach(item => {
       const cell = document.createElement('div');
       cell.className = 'letter-cell';
-      
-      if (i < ARABIC_LETTERS.length) {
-        const item = ARABIC_LETTERS[i];
-        cell.innerText = item.char;
-        cell.onclick = () => handleLetterClick(item.char, cell);
-      } else {
-        cell.classList.add('empty');
-      }
+      cell.innerText = item.char;
+      cell.onclick = () => handleLetterClick(item.char, cell);
       grid.appendChild(cell);
-    }
+    });
   }
 
   function setLevel(lvl) {
@@ -352,7 +387,7 @@
       const randomItem = ARABIC_LETTERS[Math.floor(Math.random() * ARABIC_LETTERS.length)];
       targetLetter = randomItem.char;
       displayArea.innerHTML = `<div class="target-char">${targetLetter}</div>`;
-      playSpeech(randomItem.name);
+      playSoundAndVoice(randomItem.name);
     } 
     else if (currentLevel === 2) {
       const randomAnimal = ANIMALS[Math.floor(Math.random() * ANIMALS.length)];
@@ -365,37 +400,48 @@
       }
       slotsHtml += `</div>`;
       displayArea.innerHTML = slotsHtml;
-      playSpeech(targetWord);
+      playSoundAndVoice(targetWord);
     } 
     else if (currentLevel === 3) {
       targetWord = OBJECTS[Math.floor(Math.random() * OBJECTS.length)];
       currentWordProgress = [];
 
-      let slotsHtml = `<div style="font-size: 20px; color: #4b5563; font-weight: bold;">استمع للكلمة ورتّب حروفها</div><div class="progress-word">`;
+      let slotsHtml = `<div style="font-size: 19px; color: #4b5563; font-weight: bold;">استمع للكلمة ورتّب حروفها</div><div class="progress-word">`;
       for (let i = 0; i < targetWord.length; i++) {
         slotsHtml += `<div class="slot" id="slot-${i}"></div>`;
       }
       slotsHtml += `</div>`;
       displayArea.innerHTML = slotsHtml;
-      playSpeech(targetWord);
+      playSoundAndVoice(targetWord);
     }
   }
 
-  function handleLetterClick(letter, cellEl) {
-    const normalize = ch => ch.replace(/[أإآ]/g, 'ا').replace(/هـ/g, 'ه');
+  // تسوية ذكية للحروف العربية: الهمزات والتاء المربوطة والهاء
+  function normalizeArabic(ch) {
+    return ch
+      .replace(/[أإآء]/g, 'ا')
+      .replace(/[ةه]/g, 'هـ')
+      .replace(/ى/g, 'ي');
+  }
 
+  function handleLetterClick(letter, cellEl) {
     if (currentLevel === 1) {
-      if (letter === targetLetter) {
+      const isMatch = (letter === targetLetter) || (normalizeArabic(letter) === normalizeArabic(targetLetter));
+      if (isMatch) {
         showSuccess(cellEl);
-        setTimeout(nextQuestion, 1100);
+        playTone('success');
+        setTimeout(nextQuestion, 1000);
       } else {
         showError(cellEl);
-        playSpeech(currentVoiceText);
+        playSoundAndVoice(currentVoiceText, 'error');
       }
     } else {
       const expectedChar = targetWord[currentWordProgress.length];
-      if (letter === expectedChar || normalize(letter) === normalize(expectedChar)) {
+      const isMatch = (letter === expectedChar) || (normalizeArabic(letter) === normalizeArabic(expectedChar));
+
+      if (isMatch) {
         cellEl.classList.add('pop');
+        playTone('success');
         setTimeout(() => cellEl.classList.remove('pop'), 200);
 
         const slot = document.getElementById(`slot-${currentWordProgress.length}`);
@@ -406,11 +452,11 @@
         if (currentWordProgress.length === targetWord.length) {
           document.getElementById('feedback').innerText = 'ممتاز! إجابة صحيحة 🎉';
           document.getElementById('feedback').style.color = '#16a34a';
-          setTimeout(nextQuestion, 1400);
+          setTimeout(nextQuestion, 1300);
         }
       } else {
         showError(cellEl);
-        playSpeech(currentVoiceText);
+        playSoundAndVoice(currentVoiceText, 'error');
       }
     }
   }
