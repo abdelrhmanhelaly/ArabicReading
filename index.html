@@ -4,6 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>لعبة الحروف والكلمات العربية</title>
+  <!-- مكتبة صوتية متوافقة مع متصفحات الموبايل والكمبيوتر مجاناً -->
+  <script src="https://code.responsivevoice.org/responsivevoice.js?key=FREE_KEY"></script>
   <style>
     * {
       box-sizing: border-box;
@@ -35,27 +37,26 @@
     }
     #startOverlay {
       position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(255, 255, 255, 0.96);
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(255, 255, 255, 0.98);
       border-radius: 20px;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       z-index: 50;
+      text-align: center;
+      padding: 20px;
     }
     #startOverlay button {
-      background: #22c55e;
+      background: #16a34a;
       color: white;
       font-size: 22px;
       font-weight: bold;
-      padding: 16px 36px;
+      padding: 18px 36px;
       border: none;
-      border-radius: 30px;
-      box-shadow: 0 6px 16px rgba(34, 197, 94, 0.4);
+      border-radius: 35px;
+      box-shadow: 0 8px 20px rgba(22, 163, 74, 0.35);
       cursor: pointer;
     }
     .level-bar {
@@ -122,19 +123,22 @@
       background: #dcfce7;
     }
     .sound-btn {
-      background: #3b82f6;
+      background: #2563eb;
       color: white;
       border: none;
       border-radius: 50%;
-      width: 50px;
-      height: 50px;
-      font-size: 24px;
+      width: 55px;
+      height: 55px;
+      font-size: 26px;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
       margin-bottom: 15px;
-      box-shadow: 0 4px 6px rgba(59, 130, 246, 0.3);
+      box-shadow: 0 4px 10px rgba(37, 99, 235, 0.35);
+    }
+    .sound-btn:active {
+      transform: scale(0.92);
     }
     .grid {
       display: grid;
@@ -192,9 +196,10 @@
 <body>
 
 <div class="container">
-  <!-- شاشة للضغط حتى يسمح المتصفح بإخراج الصوت -->
+  <!-- شاشة إلزامية لفك قيود المتصفح على الصوت -->
   <div id="startOverlay">
-    <button onclick="startGame()">اضغط هنا لبدء اللعبة 🔊</button>
+    <h2 style="margin-bottom: 15px; color:#15803d;">مرحباً بك في لعبة الحروف! 🎈</h2>
+    <button onclick="startGame()">اضغط هنا للبدء وسماع الصوت 🔊</button>
   </div>
 
   <div class="level-bar">
@@ -213,7 +218,6 @@
 </div>
 
 <script>
-  // جدول الحروف وأسماء نطقها لكي ينطق "ألف، باء، تاء..." بدلاً من صوت الحرف المجرد
   const ARABIC_LETTERS = [
     { char: 'أ', name: 'ألف' },
     { char: 'ب', name: 'باء' },
@@ -266,41 +270,51 @@
   let currentWordProgress = [];
   let currentVoiceText = '';
 
-  // مشغل صوت Audio حقيقي ومباشر
-  const audioPlayer = new Audio();
-
-  function playArabicSpeech(text) {
+  // دالة نطق موثوقة تعمل عبر تقنيات متعددة
+  function playSpeech(text) {
     if (!text) return;
     currentVoiceText = text;
 
-    // استخدام خدمة نطق صوتية مباشرة (تدعم اللغة العربية دائماً بدون الاعتماد على نظام الجهاز)
-    const audioUrl = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(text)}&tl=ar&client=tw-ob`;
+    // الخيار 1: مكتبة ResponsiveVoice (سيرفر صوتي سحابي موثوق يدعم العربية ولا يُحظر في GitHub)
+    if (window.responsiveVoice && responsiveVoice.voiceSupport()) {
+      responsiveVoice.cancel();
+      responsiveVoice.speak(text, "Arabic Female", { rate: 0.85 });
+      return;
+    }
 
-    audioPlayer.src = audioUrl;
-    audioPlayer.play().catch(e => {
-      // بديل إضافي في حال منع المتصفح رابط المصدر
-      if ('speechSynthesis' in window) {
-        window.speechSynthesis.cancel();
-        const u = new SpeechSynthesisUtterance(text);
-        u.lang = 'ar-SA';
-        window.speechSynthesis.speak(u);
-      }
-    });
+    // الخيار 2: Web Speech API كبديل فوري في المتصفح
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(text);
+      u.lang = 'ar-SA';
+      u.rate = 0.85;
+
+      const voices = window.speechSynthesis.getVoices();
+      const arVoice = voices.find(v => v.lang && v.lang.startsWith('ar'));
+      if (arVoice) u.voice = arVoice;
+
+      window.speechSynthesis.speak(u);
+    }
   }
 
   function repeatSound() {
-    playArabicSpeech(currentVoiceText);
+    playSpeech(currentVoiceText);
   }
 
   function startGame() {
+    // إخفاء الواجهة
     document.getElementById('startOverlay').style.display = 'none';
-    // تشغيل ملف صامت لحظياً لكسر قيود المتصفح
-    audioPlayer.play().then(() => {
-      audioPlayer.pause();
-      nextQuestion();
-    }).catch(() => {
-      nextQuestion();
-    });
+
+    // فك حظر الصوت في المتصفح (Audio Context Unlock)
+    if (window.responsiveVoice) {
+      responsiveVoice.speak("أهلاً بك", "Arabic Female", { volume: 0 });
+    }
+    if ('speechSynthesis' in window) {
+      const dummy = new SpeechSynthesisUtterance('');
+      window.speechSynthesis.speak(dummy);
+    }
+
+    setTimeout(nextQuestion, 200);
   }
 
   function createGrid() {
@@ -338,8 +352,7 @@
       const randomItem = ARABIC_LETTERS[Math.floor(Math.random() * ARABIC_LETTERS.length)];
       targetLetter = randomItem.char;
       displayArea.innerHTML = `<div class="target-char">${targetLetter}</div>`;
-      // نطق اسم الحرف بصوت واضح (مثلاً: "حرف الجيم" أو "جيم")
-      playArabicSpeech(randomItem.name);
+      playSpeech(randomItem.name);
     } 
     else if (currentLevel === 2) {
       const randomAnimal = ANIMALS[Math.floor(Math.random() * ANIMALS.length)];
@@ -352,7 +365,7 @@
       }
       slotsHtml += `</div>`;
       displayArea.innerHTML = slotsHtml;
-      playArabicSpeech(targetWord);
+      playSpeech(targetWord);
     } 
     else if (currentLevel === 3) {
       targetWord = OBJECTS[Math.floor(Math.random() * OBJECTS.length)];
@@ -364,7 +377,7 @@
       }
       slotsHtml += `</div>`;
       displayArea.innerHTML = slotsHtml;
-      playArabicSpeech(targetWord);
+      playSpeech(targetWord);
     }
   }
 
@@ -377,7 +390,7 @@
         setTimeout(nextQuestion, 1100);
       } else {
         showError(cellEl);
-        playArabicSpeech(currentVoiceText);
+        playSpeech(currentVoiceText);
       }
     } else {
       const expectedChar = targetWord[currentWordProgress.length];
@@ -397,7 +410,7 @@
         }
       } else {
         showError(cellEl);
-        playArabicSpeech(currentVoiceText);
+        playSpeech(currentVoiceText);
       }
     }
   }
